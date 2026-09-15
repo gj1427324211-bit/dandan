@@ -21,6 +21,7 @@ jobs:
         run: |
           mkdir -p public
           cp -r debs public/debs
+          cp CydiaIcon.png public/CydiaIcon.png
           cd public
           dpkg-scanpackages debs /dev/null > Packages
           bzip2 -k Packages
