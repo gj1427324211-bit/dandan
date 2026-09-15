@@ -1,0 +1,42 @@
+name: Build Sileo Repo
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dpkg
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev
+
+      - name: Build repo
+        run: |
+          mkdir -p public
+          cp -r debs public/debs
+          cd public
+          dpkg-scanpackages debs /dev/null > Packages
+          bzip2 -k Packages
+          cat > Release <<EOF
+          Origin: My Repo
+          Label: My Repo
+          Suite: stable
+          Version: 1.0
+          Codename: ios
+          Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e
+          Components: main
+          Description: My personal Sileo repo
+          EOF
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
