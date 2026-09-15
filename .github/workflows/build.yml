@@ -26,8 +26,8 @@ jobs:
           dpkg-scanpackages debs /dev/null > Packages
           bzip2 -k Packages
           cat > Release <<EOF
-          Origin: My Repo
-          Label: My Repo
+          Origin: 蛋蛋
+          Label: 蛋蛋
           Suite: stable
           Version: 1.0
           Codename: ios
