@@ -1,5 +1,4 @@
 name: Build Sileo Repo
-
 on:
   push:
     branches: [ main ]
@@ -14,22 +13,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install build tools
-        run: |
-          sudo apt update
-          sudo apt install -y dpkg-dev bzip2
+      - name: Install tools
+        run: sudo apt update && sudo apt install -y dpkg-dev bzip2
 
       - name: Build repo
         run: |
           mkdir -p public
           cp -r debs public/debs
-          cp CydiaIcon.png public/CydiaIcon.png
+          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
           dpkg-scanpackages debs /dev/null > Packages
-          gzip -k -f Packages
+          gzip -kf Packages
           bzip2 -k Packages
           cat > Release <<EOF
 Origin: 蛋蛋
@@ -39,12 +36,10 @@ Version: 1.0
 Codename: ios
 Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e
 Components: main
-Description: My personal Sileo repo
+Description: 蛋蛋个人源
 EOF
-          md5sum Packages Packages.gz Packages.bz2 > MD5SUMS
-          sha256sum Packages Packages.gz Packages.bz2 > SHA256SUMS
 
-      - name: Upload Pages artifact
+      - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./public
@@ -56,6 +51,6 @@ EOF
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
