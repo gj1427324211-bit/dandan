@@ -19,17 +19,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Install tools
         run: sudo apt update && sudo apt install -y dpkg-dev bzip2
-
       - name: Build repo
         run: |
           mkdir -p public
           cp -r debs public/debs
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
-
           > Packages
           if ls debs/*.deb >/dev/null 2>&1; then
             for deb in debs/*.deb; do
@@ -37,14 +34,9 @@ jobs:
               dpkg-scanpackages --multiversion "$deb" /dev/null >> Packages 2>/dev/null || true
             done
           fi
-
-          if [ ! -s Packages ]; then
-            echo "# Empty repo" > Packages
-          fi
-
+          if [ ! -s Packages ]; then echo "# Empty repo" > Packages; fi
           gzip -k -f Packages
           bzip2 -k Packages
-
           echo "Origin: 蛋蛋" > Release
           echo "Label: 蛋蛋" >> Release
           echo "Suite: stable" >> Release
@@ -53,7 +45,6 @@ jobs:
           echo "Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e" >> Release
           echo "Components: main" >> Release
           echo "Description: 蛋蛋个人源" >> Release
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
