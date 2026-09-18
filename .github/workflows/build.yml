@@ -16,32 +16,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install required tools
-        run: |
-          sudo apt update
-          sudo apt install -y dpkg-dev bzip2
+      - name: Install tools
+        run: sudo apt update && sudo apt install -y dpkg-dev bzip2
 
-      - name: Build repository index
+      - name: Build repo
         run: |
           mkdir -p public
           cp -r debs public/debs
-          if [ -f "CydiaIcon.png" ]; then
-            cp CydiaIcon.png public/
-          fi
+          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
           dpkg-scanpackages debs /dev/null > Packages
           gzip -k -f Packages
           bzip2 -k Packages
-          cat > Release <<'EOF'
-Origin: 蛋蛋
-Label: 蛋蛋
-Suite: stable
-Version: 1.0
-Codename: ios
-Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e
-Components: main
-Description: 蛋蛋个人源
-EOF
+          echo "Origin: 蛋蛋" > Release
+          echo "Label: 蛋蛋" >> Release
+          echo "Suite: stable" >> Release
+          echo "Version: 1.0" >> Release
+          echo "Codename: ios" >> Release
+          echo "Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e" >> Release
+          echo "Components: main" >> Release
+          echo "Description: 蛋蛋个人源" >> Release
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
