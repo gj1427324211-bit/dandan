@@ -25,7 +25,8 @@ jobs:
           cp -r debs public/debs
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
-          dpkg-scanpackages debs /dev/null > Packages
+          # --multiversion 保留同一个包的所有版本
+          dpkg-scanpackages --multiversion debs /dev/null 2>/dev/null > Packages
           gzip -k -f Packages
           bzip2 -k Packages
           echo "Origin: 蛋蛋" > Release
