@@ -226,6 +226,43 @@ Icon: https://bvnrepo999.github.io/icon/tinhchinh.png
 Name: Airaw Split View Standard (Roothide)
 Sileodepiction: https://bvnrepo999.github.io/sileodepictions/splitstandard.json
 
+Package: com.bvn.squidforcecrack.rl
+Version: 1.0.1-1
+Architecture: iphoneos-arm64e
+Maintainer: BVN
+Installed-Size: 328
+Pre-Depends: rootless-compat(>= 0.9)
+Depends: firmware (>= 15.0), mobilesubstrate
+Filename: debs/SquidForce VIP-1.0.1-1.deb
+Size: 36928
+MD5sum: bd74b89cf89a6d9c539b97d0179f10e2
+SHA1: 37c840aa29caa4ace11e39fcbb94b969e868adbf
+SHA256: 5ffe9229ec2b0b0d01feab0e08b953b4329ffa227b306b1eb27017352ad72300
+Section: Tweaks
+Description: SquidForce无弹窗解锁VIP
+Author: BVN
+Icon: https://huayuarc.github.io/icon/squidforcecrack.jpg
+Name: SquidForce VIP
+
+Package: com.bvn.squidgesturepro.rl
+Version: 2.7.6K
+Architecture: iphoneos-arm64
+Maintainer: SquidForce, Backup
+Installed-Size: 6620
+Depends: mobilesubstrate, preferenceloader, firmware (>= 14.0), com.bvn.squidforcecrack.rl
+Conflicts: com.lclrc.squidgesture, com.lclrc.squidgesturepro
+Filename: debs/SquidGesturePro-2.7.6K (1).deb
+Size: 1773200
+MD5sum: a6d00a30e9b9e8b1e5391950724e503c
+SHA1: 544a53e5d8fb25651f8608330292257c02fb3b3c
+SHA256: 2bba0565f3b8ab15e1c560ce03215b29c23900005487060bdb94bac57ba3672c
+Section: Tweaks
+Description: 一款手势增强插件。专业版支持将多项操作聚合到同一个手势，并以面板形式展示；后续还会支持动作流。
+ * A gesture tweak. Pro version supports centralizing multiple actions into a single gesture, displayed as a panel. Action flows will be supported in the future.
+Author: SquidForce, Backup
+Icon: https://huayuarc.github.io/icon/SquidGesture@2x.png
+Name: SquidGesturePro
+
 Package: com.rain.raindyn
 Version: 1.2.0-9+debug
 Architecture: iphoneos-arm64
@@ -257,4 +294,40 @@ Section: Tweaks
 Description: 神秘功能
 Author: Rascal
 Name: 控制中心视频模块
+
+Package: com.sini.adsspee
+Version: 1.1.3
+Architecture: iphoneos-arm64
+Maintainer: lenglengyu <lenglengyu@126.com>
+Installed-Size: 620
+Depends: mobilesubstrate, preferenceloader
+Filename: debs/VideoAdsSpeed(rootless)-1.1.3.deb
+Size: 110344
+MD5sum: 42004c91dc74df35bee816d9a9185fc7
+SHA1: 1a90621b4aa4d42242d87b692777706a2a3b5d3b
+SHA256: ccec859f98c43ceb5c3736b4622ffdf15d0c9f8a3c6fdcd6c6320e198f13a2a0
+Section: 应用破解
+Description: 快速跳过激励视频广告，奖励正常领取。
+Author: lenglengyu
+Icon: https://sini921.github.io/repo/sileodepiction/icon/adsspee.png
+Name: VideoAdsSpeed(rootless)
+Sileodepiction: https://sini921.github.io/repo/sileodepiction/adsspee/js.json
+
+Package: xyz.cypwn.touchvis
+Version: 4.0.2k
+Architecture: iphoneos-arm64
+Maintainer: CyPwn
+Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader, xyz.cypwn.82flexcrack
+Filename: debs/Touch-Viz-4.0.2k.deb
+Size: 1360640
+MD5sum: f90b27f9955c8c70afb0d06c8d8c503f
+SHA1: f80e0db5078feef95a74bce81752d0e3b3d7c529
+SHA256: 1bcfd10f05ae06fb5da1f8bc45a50cd28650c2f04c27726b1f773331cefd79ea
+Section: Tweaks
+Description: Display your touch interactions. Cracked by CBZ!
+Author: Lessica
+Depiction: https://repo.cypwn.xyz/depiction/3458
+Icon: https://repo.cypwn.xyz/packages/TouchViz-Rootless/icon.png
+Name: Touch-Viz
+Sileodepiction: https://repo.cypwn.xyz/sileo_depiction/3458
 
