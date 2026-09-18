@@ -9,6 +9,11 @@ permissions:
   pages: write
   id-token: write
 
+# 增加并发控制，避免多次推送导致部署队列拥堵
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,7 +31,7 @@ jobs:
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
 
-          # 逐个扫描，跳过坏包，确保 Packages 至少被创建
+          # 逐个扫描，跳过坏包（保留中文名，不重打包）
           > Packages
           if ls debs/*.deb >/dev/null 2>&1; then
             for deb in debs/*.deb; do
@@ -35,7 +40,7 @@ jobs:
             done
           fi
 
-          # 如果 Packages 为空（0字节），写一个最小可用内容防止 Sileo 报错
+          # 兜底：防止空文件导致 Sileo 报错
           if [ ! -s Packages ]; then
             echo "# Empty repo" > Packages
           fi
@@ -60,10 +65,13 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # 修复核心：保留环境声明，但需配合仓库设置（见下方步骤）
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
