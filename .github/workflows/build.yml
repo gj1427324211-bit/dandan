@@ -25,14 +25,24 @@ jobs:
           cp -r debs public/debs
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
-          # 多版本扫描，出错也继续
-          dpkg-scanpackages --multiversion debs /dev/null 2>/dev/null || true
-          # 只有Packages存在才压缩
-          if [ -f Packages ]; then
-            gzip -k -f Packages
-            bzip2 -k Packages
+
+          # 逐个扫描，跳过坏包，确保 Packages 至少被创建
+          > Packages
+          if ls debs/*.deb >/dev/null 2>&1; then
+            for deb in debs/*.deb; do
+              dpkg-deb -I "$deb" >/dev/null 2>&1 || { echo "⚠️ Skipping broken: $deb"; continue; }
+              dpkg-scanpackages --multiversion "$deb" /dev/null >> Packages 2>/dev/null || true
+            done
           fi
-          # 生成Release
+
+          # 如果 Packages 为空（0字节），写一个最小可用内容防止 Sileo 报错
+          if [ ! -s Packages ]; then
+            echo "# Empty repo" > Packages
+          fi
+
+          gzip -k -f Packages
+          bzip2 -k Packages
+
           echo "Origin: 蛋蛋" > Release
           echo "Label: 蛋蛋" >> Release
           echo "Suite: stable" >> Release
