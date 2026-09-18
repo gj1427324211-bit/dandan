@@ -14,10 +14,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - name: Install dpkg & bzip2
-        run: sudo apt-get update && sudo apt-get install -y dpkg-dev bzip2
+      - name: Install build tools
+        run: |
+          sudo apt update
+          sudo apt install -y dpkg-dev bzip2
 
       - name: Build repo
         run: |
@@ -38,12 +41,21 @@ Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e
 Components: main
 Description: My personal Sileo repo
 EOF
-        # 生成MD5、SHA256校验信息，消除Sileo警告
           md5sum Packages Packages.gz Packages.bz2 > MD5SUMS
           sha256sum Packages Packages.gz Packages.bz2 > SHA256SUMS
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          path: ./public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
