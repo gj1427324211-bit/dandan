@@ -25,10 +25,14 @@ jobs:
           cp -r debs public/debs
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
-          # --multiversion 保留多版本；|| true 坏包导致扫描失败也继续执行
+          # 多版本扫描，出错也继续
           dpkg-scanpackages --multiversion debs /dev/null 2>/dev/null || true
-          gzip -k -f Packages
-          bzip2 -k Packages
+          # 只有Packages存在才压缩
+          if [ -f Packages ]; then
+            gzip -k -f Packages
+            bzip2 -k Packages
+          fi
+          # 生成Release
           echo "Origin: 蛋蛋" > Release
           echo "Label: 蛋蛋" >> Release
           echo "Suite: stable" >> Release
