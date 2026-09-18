@@ -13,22 +13,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install tools
-        run: sudo apt update && sudo apt install -y dpkg-dev bzip2
+      - name: Install required tools
+        run: |
+          sudo apt update
+          sudo apt install -y dpkg-dev bzip2
 
-      - name: Build repo
+      - name: Build repository index
         run: |
           mkdir -p public
           cp -r debs public/debs
-          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
+          if [ -f "CydiaIcon.png" ]; then
+            cp CydiaIcon.png public/
+          fi
           cd public
           dpkg-scanpackages debs /dev/null > Packages
-          gzip -kf Packages
+          gzip -k -f Packages
           bzip2 -k Packages
-          cat > Release <<EOF
+          cat > Release <<'EOF'
 Origin: 蛋蛋
 Label: 蛋蛋
 Suite: stable
@@ -39,7 +43,7 @@ Components: main
 Description: 蛋蛋个人源
 EOF
 
-      - name: Upload pages artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./public
@@ -51,6 +55,6 @@ EOF
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
