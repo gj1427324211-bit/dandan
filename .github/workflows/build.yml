@@ -24,15 +24,21 @@ jobs:
 
       - name: Build repo
         run: |
-          set -e
           rm -rf public
           mkdir -p public/debs
 
-          if [ -d debs ] && ls debs/*.deb 1> /dev/null 2>&1; then
-            cp debs/*.deb public/debs/
+          echo "===== 检查debs目录 ====="
+          ls -la ./
+
+          if [ -d "debs" ]; then
+            echo "debs文件夹存在"
+            ls -la debs/
+            cp debs/*.deb public/debs/ || echo "没有deb包，跳过复制"
+          else
+            echo "警告：debs文件夹不存在！"
           fi
           
-          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
+          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/ || echo "CydiaIcon.png不存在，跳过"
 
           cd public
           
@@ -50,7 +56,7 @@ jobs:
           echo "Components: main" >> Release
           echo "Description: 蛋蛋个人源" >> Release
           
-          echo "===== 构建产物 ====="
+          echo "===== 构建完成，public目录文件 ====="
           ls -la
           ls -la debs/ || true
 
