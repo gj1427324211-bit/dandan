@@ -1,60 +1,34 @@
-name: Build Sileo Repo
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: sudo apt update && sudo apt install -y dpkg-dev bzip2
-      - name: Build repo
-        run: |
-          rm -rf public
-          mkdir -p public
-          cp debs/*.deb public/debs/ 2>/dev/null || true
-          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
-          cd public
-          dpkg-scanpackages -m debs /dev/null > Packages 2>Packages.err
-          echo "=== 错误输出 ==="
-          cat Packages.err || true
-          echo "=== Packages 行数 ==="
-          wc -l Packages || true
-          echo "=== Packages 前 40 行 ==="
-          head -n 40 Packages || true
-          gzip -k -f Packages
-          bzip2 -k Packages
-          {
-            echo "Origin: 蛋蛋"
-            echo "Label: 蛋蛋"
-            echo "Suite: stable"
-            echo "Version: 1.0"
-            echo "Codename: ios"
-            echo "Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e"
-            echo "Components: main"
-            echo "Description: 蛋蛋个人源"
-          } > Release
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+- name: Build repo
+  run: |
+    rm -rf public
+    mkdir -p public/debs
+    python3 - <<'PY'
+    import shutil, os, glob
+    src = "debs"
+    dst = "public/debs"
+    for f in os.listdir(src):
+        if f.endswith(".deb"):
+            shutil.copy2(os.path.join(src, f), os.path.join(dst, f))
+    print("已复制:", [f for f in os.listdir(dst)])
+    PY
+    [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
+    cd public
+    dpkg-scanpackages -m debs /dev/null > Packages 2>Packages.err
+    echo "=== 错误输出 ==="
+    cat Packages.err || true
+    echo "=== Packages 行数 ==="
+    wc -l Packages || true
+    echo "=== Packages 前 40 行 ==="
+    head -n 40 Packages || true
+    gzip -k -f Packages
+    bzip2 -k Packages
+    {
+      echo "Origin: 蛋蛋"
+      echo "Label: 蛋蛋"
+      echo "Suite: stable"
+      echo "Version: 1.0"
+      echo "Codename: ios"
+      echo "Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e"
+      echo "Components: main"
+      echo "Description: 蛋蛋个人源"
+    } > Release
