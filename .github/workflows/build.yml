@@ -29,22 +29,24 @@ jobs:
           cd public
           dpkg-scanpackages -m debs /dev/null | \
             sed 's|^Filename: debs/|Filename: |' > Packages
-          ls -la Packages
-          head -20 Packages
-          gzip -k -f Packages
+          echo "=== Packages 行数 ==="
+          wc -l Packages
+          echo "=== Packages 前 5 行 ==="
+          head -5 Packages
+          gzip -9 -k -f Packages
           bzip2 -k Packages
-          cat > apt-release.conf <<'CONF'
-          APT::FTPArchive::Release::Origin "蛋蛋";
-          APT::FTPArchive::Release::Label "蛋蛋";
-          APT::FTPArchive::Release::Suite "stable";
-          APT::FTPArchive::Release::Version "1.0";
-          APT::FTPArchive::Release::Codename "ios";
-          APT::FTPArchive::Release::Architectures "iphoneos-arm iphoneos-arm64 iphoneos-arm64e";
-          APT::FTPArchive::Release::Components "main";
-          APT::FTPArchive::Release::Description "蛋蛋个人源";
-          CONF
-          apt-ftparchive -c=apt-release.conf release . > Release
-          echo "=== Release ==="
+          {
+            printf 'Origin: 蛋蛋\n'
+            printf 'Label: 蛋蛋\n'
+            printf 'Suite: stable\n'
+            printf 'Version: 1.0\n'
+            printf 'Codename: ios\n'
+            printf 'Architecture: iphoneos-arm\n'
+            printf 'Components: main\n'
+            printf 'Description: 蛋蛋个人源\n'
+          } > Release
+          apt-ftparchive release . | grep -E '^(MD5Sum|SHA1|SHA256|SHA512):' >> Release
+          echo "=== Release 内容 ==="
           cat Release
       - uses: actions/upload-pages-artifact@v3
         with:
