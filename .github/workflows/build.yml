@@ -1,1 +1,78 @@
-https://gj1427324211-bit.github.io/dandan/Release
+name: Build Sileo Repo
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y dpkg-dev bzip2
+
+      - name: Build repo
+        run: |
+          set -e
+          rm -rf public
+          mkdir -p public/debs
+
+          # 复制deb包，无deb不报错
+          if [ -d debs ] && ls debs/*.deb 1> /dev/null 2>&1; then
+            cp debs/*.deb public/debs/
+          fi
+          
+          # 复制源图标
+          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
+
+          cd public
+          
+          # 生成Packages索引，-m允许同包多版本
+          dpkg-scanpackages -m debs /dev/null | sed 's|^Filename: debs/|Filename: debs/|' > Packages
+          
+          # 同时生成 bz2 + gz，Sileo/Cydia都兼容
+          bzip2 -9 -k -f Packages
+          gzip -9 -k -f Packages
+
+          # 修正Release文件，Architectures复数！
+          cat > Release <<'EOF'
+Origin: 蛋蛋
+Label: 蛋蛋
+Suite: stable
+Version: 1.0
+Codename: ios
+Architectures: iphoneos-arm
+Components: main
+Description: 蛋蛋个人源
+EOF
+          
+          # 输出文件清单，方便排错
+          echo "===== 构建产物 ====="
+          ls -la
+          ls -la debs/ || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
