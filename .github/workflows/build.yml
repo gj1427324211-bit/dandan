@@ -27,25 +27,42 @@ jobs:
           rm -rf public
           mkdir -p public/debs
 
-          echo "===== 检查debs目录 ====="
+          echo "===== 仓库根目录 ====="
           ls -la ./
 
+          DEB_EXIST=0
           if [ -d "debs" ]; then
             echo "debs文件夹存在"
             ls -la debs/
-            cp debs/*.deb public/debs/ || echo "没有deb包，跳过复制"
+            # 遍历所有deb，校验是否合法，只复制有效的deb
+            for f in debs/*.deb; do
+              if [ -f "$f" ]; then
+                if dpkg-deb --info "$f" >/dev/null 2>&1; then
+                  echo "✅ $f 合法deb，复制"
+                  cp "$f" public/debs/
+                  DEB_EXIST=1
+                else
+                  echo "❌ $f 损坏，跳过"
+                fi
+              fi
+            done
           else
-            echo "警告：debs文件夹不存在！"
+            echo "⚠️ 仓库根目录没有debs文件夹"
           fi
           
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/ || echo "CydiaIcon.png不存在，跳过"
 
           cd public
           
-          dpkg-scanpackages -m debs /dev/null > Packages
-          
-          bzip2 -9 -k -f Packages
-          gzip -9 -k -f Packages
+          if [ $DEB_EXIST -eq 1 ]; then
+            echo "开始生成Packages索引"
+            dpkg-scanpackages -m debs /dev/null > Packages
+            bzip2 -9 -k -f Packages
+            gzip -9 -k -f Packages
+          else
+            echo "没有合法deb包，跳过Packages生成"
+            touch Packages
+          fi
 
           echo "Origin: 蛋蛋" > Release
           echo "Label: 蛋蛋" >> Release
@@ -56,7 +73,7 @@ jobs:
           echo "Components: main" >> Release
           echo "Description: 蛋蛋个人源" >> Release
           
-          echo "===== 构建完成，public目录文件 ====="
+          echo "===== public目录文件 ====="
           ls -la
           ls -la debs/ || true
 
