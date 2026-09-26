@@ -29,7 +29,17 @@ jobs:
           dpkg-scanpackages -m . /dev/null | sed 's|^Filename: debs/|Filename: |' > Packages
           gzip -k -f Packages
           bzip2 -k Packages
-          apt-ftparchive release . > Release
+          {
+            echo "Origin: 蛋蛋"
+            echo "Label: 蛋蛋"
+            echo "Suite: stable"
+            echo "Version: 1.0"
+            echo "Codename: ios"
+            echo "Architecture: iphoneos-arm"
+            echo "Components: main"
+            echo "Description: 蛋蛋个人源"
+          } > Release
+          apt-ftparchive release . >> Release
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./public
