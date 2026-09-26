@@ -34,7 +34,6 @@ jobs:
           if [ -d "debs" ]; then
             echo "debs文件夹存在"
             ls -la debs/
-            # 遍历所有deb，校验是否合法，只复制有效的deb
             for f in debs/*.deb; do
               if [ -f "$f" ]; then
                 if dpkg-deb --info "$f" >/dev/null 2>&1; then
@@ -67,10 +66,9 @@ jobs:
           echo "Origin: 蛋蛋" > Release
           echo "Label: 蛋蛋" >> Release
           echo "Suite: stable" >> Release
-          echo "Version: 1.0" >> Release
           echo "Codename: ios" >> Release
-          echo "Architectures: iphoneos-arm" >> Release
-          echo "Components: main" >> Release
+          echo "Architecture: iphoneos-arm" >> Release
+          echo "Component: main" >> Release
           echo "Description: 蛋蛋个人源" >> Release
           
           echo "===== public目录文件 ====="
