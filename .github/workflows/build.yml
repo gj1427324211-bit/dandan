@@ -41,16 +41,14 @@ jobs:
           bzip2 -9 -k -f Packages
           gzip -9 -k -f Packages
 
-          cat > Release <<'EOF'
-Origin: 蛋蛋
-Label: 蛋蛋
-Suite: stable
-Version: 1.0
-Codename: ios
-Architectures: iphoneos-arm
-Components: main
-Description: 蛋蛋个人源
-EOF
+          echo "Origin: 蛋蛋" > Release
+          echo "Label: 蛋蛋" >> Release
+          echo "Suite: stable" >> Release
+          echo "Version: 1.0" >> Release
+          echo "Codename: ios" >> Release
+          echo "Architectures: iphoneos-arm" >> Release
+          echo "Components: main" >> Release
+          echo "Description: 蛋蛋个人源" >> Release
           
           echo "===== 构建产物 ====="
           ls -la
