@@ -17,36 +17,35 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install tools
-        run: sudo apt update && sudo apt install -y dpkg-dev bzip2
+      - uses: actions/checkout@v4
+      - run: sudo apt update && sudo apt install -y dpkg-dev bzip2
       - name: Build repo
         run: |
+          rm -rf public
           mkdir -p public
-          cp -r debs public/debs
+          cp debs/*.deb public/debs/ 2>/dev/null || true
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
-          > Packages
-          if ls debs/*.deb >/dev/null 2>&1; then
-            for deb in debs/*.deb; do
-              dpkg-deb -I "$deb" >/dev/null 2>&1 || { echo "⚠️ Skipping broken: $deb"; continue; }
-              dpkg-scanpackages --multiversion "$deb" /dev/null >> Packages 2>/dev/null || true
-            done
-          fi
-          if [ ! -s Packages ]; then echo "# Empty repo" > Packages; fi
+          dpkg-scanpackages -m debs /dev/null > Packages 2>Packages.err
+          echo "=== 错误输出 ==="
+          cat Packages.err || true
+          echo "=== Packages 行数 ==="
+          wc -l Packages || true
+          echo "=== Packages 前 40 行 ==="
+          head -n 40 Packages || true
           gzip -k -f Packages
           bzip2 -k Packages
-          echo "Origin: 蛋蛋" > Release
-          echo "Label: 蛋蛋" >> Release
-          echo "Suite: stable" >> Release
-          echo "Version: 1.0" >> Release
-          echo "Codename: ios" >> Release
-          echo "Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e" >> Release
-          echo "Components: main" >> Release
-          echo "Description: 蛋蛋个人源" >> Release
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+          {
+            echo "Origin: 蛋蛋"
+            echo "Label: 蛋蛋"
+            echo "Suite: stable"
+            echo "Version: 1.0"
+            echo "Codename: ios"
+            echo "Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e"
+            echo "Components: main"
+            echo "Description: 蛋蛋个人源"
+          } > Release
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: ./public
 
@@ -57,6 +56,5 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
