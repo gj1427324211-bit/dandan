@@ -67,8 +67,8 @@ jobs:
           echo "Label: 蛋蛋" >> Release
           echo "Suite: stable" >> Release
           echo "Codename: ios" >> Release
-          echo "Architecture: iphoneos-arm" >> Release
-          echo "Component: main" >> Release
+          echo "Architectures: iphoneos-arm64" >> Release
+          echo "Components: main" >> Release
           echo "Description: 蛋蛋个人源" >> Release
           
           echo "===== public目录文件 ====="
