@@ -29,17 +29,17 @@ jobs:
           dpkg-scanpackages -m . /dev/null | sed 's|^Filename: debs/|Filename: |' > Packages
           gzip -k -f Packages
           bzip2 -k Packages
-          {
-            echo "Origin: 蛋蛋"
-            echo "Label: 蛋蛋"
-            echo "Suite: stable"
-            echo "Version: 1.0"
-            echo "Codename: ios"
-            echo "Architecture: iphoneos-arm"
-            echo "Components: main"
-            echo "Description: 蛋蛋个人源"
-          } > Release
-          apt-ftparchive release . >> Release
+          cat > apt-release.conf <<'CONF'
+          APT::FTPArchive::Release::Origin "蛋蛋";
+          APT::FTPArchive::Release::Label "蛋蛋";
+          APT::FTPArchive::Release::Suite "stable";
+          APT::FTPArchive::Release::Version "1.0";
+          APT::FTPArchive::Release::Codename "ios";
+          APT::FTPArchive::Release::Architectures "iphoneos-arm iphoneos-arm64 iphoneos-arm64e";
+          APT::FTPArchive::Release::Components "main";
+          APT::FTPArchive::Release::Description "蛋蛋个人源";
+          CONF
+          apt-ftparchive -c=apt-release.conf release . > Release
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./public
