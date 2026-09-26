@@ -28,24 +28,19 @@ jobs:
           rm -rf public
           mkdir -p public/debs
 
-          # 复制deb包，无deb不报错
           if [ -d debs ] && ls debs/*.deb 1> /dev/null 2>&1; then
             cp debs/*.deb public/debs/
           fi
           
-          # 复制源图标
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
 
           cd public
           
-          # 生成Packages索引，-m允许同包多版本
-          dpkg-scanpackages -m debs /dev/null | sed 's|^Filename: debs/|Filename: debs/|' > Packages
+          dpkg-scanpackages -m debs /dev/null > Packages
           
-          # 同时生成 bz2 + gz，Sileo/Cydia都兼容
           bzip2 -9 -k -f Packages
           gzip -9 -k -f Packages
 
-          # 修正Release文件，Architectures复数！
           cat > Release <<'EOF'
 Origin: 蛋蛋
 Label: 蛋蛋
@@ -57,7 +52,6 @@ Components: main
 Description: 蛋蛋个人源
 EOF
           
-          # 输出文件清单，方便排错
           echo "===== 构建产物 ====="
           ls -la
           ls -la debs/ || true
