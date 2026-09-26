@@ -22,40 +22,14 @@ jobs:
       - name: Build repo
         run: |
           rm -rf public
-          mkdir -p public/debs
-          python3 - <<'PY'
-          import shutil, os
-          for f in sorted(os.listdir("debs")):
-              if f.endswith(".deb"):
-                  shutil.copy2(os.path.join("debs", f),
-                               os.path.join("public/debs", f))
-          PY
+          mkdir -p public
+          cp debs/*.deb public/debs/ 2>/dev/null || true
+          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/
           cd public
-          echo "=== 文件列表 ==="
-          ls -la debs/ || true
-          echo "=== 逐个检查包 ==="
-          for f in debs/*; do
-            echo "----- $f -----"
-            dpkg-deb -I "$f" 2>&1 | head -5 || true
-          done
-          echo "=== 尝试生成索引 ==="
-          dpkg-scanpackages -m . /dev/null > Packages 2>&1
-          echo "exit: $?"
-          ls -la Packages || true
-          wc -l Packages || true
-          echo "=== Packages 内容 ==="
-          head -30 Packages || true
+          dpkg-scanpackages -m . /dev/null | sed 's|^Filename: debs/|Filename: |' > Packages
           gzip -k -f Packages
           bzip2 -k Packages
-          printf '%s\n' \
-            "Origin: 蛋蛋" \
-            "Label: 蛋蛋" \
-            "Suite: stable" \
-            "Version: 1.0" \
-            "Codename: ios" \
-            "Architectures: iphoneos-arm iphoneos-arm64 iphoneos-arm64e" \
-            "Components: main" \
-            "Description: 蛋蛋个人源" > Release
+          apt-ftparchive release . > Release
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./public
