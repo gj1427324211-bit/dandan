@@ -25,15 +25,26 @@ jobs:
           mkdir -p public/debs
           python3 - <<'PY'
           import shutil, os
-          for f in os.listdir("debs"):
+          for f in sorted(os.listdir("debs")):
               if f.endswith(".deb"):
                   shutil.copy2(os.path.join("debs", f),
                                os.path.join("public/debs", f))
-          print("copied:", sorted(os.listdir("public/debs")))
           PY
-          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/ || true
           cd public
-          dpkg-scanpackages -m . /dev/null > Packages
+          echo "=== 文件列表 ==="
+          ls -la debs/ || true
+          echo "=== 逐个检查包 ==="
+          for f in debs/*; do
+            echo "----- $f -----"
+            dpkg-deb -I "$f" 2>&1 | head -5 || true
+          done
+          echo "=== 尝试生成索引 ==="
+          dpkg-scanpackages -m . /dev/null > Packages 2>&1
+          echo "exit: $?"
+          ls -la Packages || true
+          wc -l Packages || true
+          echo "=== Packages 内容 ==="
+          head -30 Packages || true
           gzip -k -f Packages
           bzip2 -k Packages
           printf '%s\n' \
