@@ -1,5 +1,4 @@
 name: Build Sileo Repo
-
 on:
   push:
     branches: [ main ]
@@ -28,8 +27,13 @@ jobs:
           rm -rf public
           mkdir -p public/debs
 
+          echo "===== 仓库根目录 ====="
+          ls -la ./
+
           DEB_EXIST=0
           if [ -d "debs" ]; then
+            echo "debs文件夹存在"
+            ls -la debs/
             for f in debs/*.deb; do
               if [ -f "$f" ]; then
                 if dpkg-deb --info "$f" >/dev/null 2>&1; then
@@ -41,65 +45,47 @@ jobs:
                 fi
               fi
             done
+          else
+            echo "⚠️ 仓库根目录没有debs文件夹"
           fi
-
+          
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/ || echo "CydiaIcon.png不存在，跳过"
 
           cd public
-
+          
           if [ $DEB_EXIST -eq 1 ]; then
             echo "开始生成Packages索引"
             dpkg-scanpackages -m debs /dev/null > Packages
+
+            echo "===== 修正Packages内架构为iphoneos-arm64 ====="
+            sed -i 's/^Architecture: .*/Architecture: iphoneos-arm64/' Packages
+
             bzip2 -9 -k -f Packages
             gzip -9 -k -f Packages
-
-            echo "===== 修正每个包的 Architecture 为 iphoneos-arm64 ====="
-            # 用 perl 逐段处理，避免 sed 多行替换的坑
-            perl -i -00pe 's/^Architecture:.*$/Architecture: iphoneos-arm64/m' Packages
-            # 重新压缩（包架构变了，哈希也得跟着变）
-            rm -f Packages.bz2 Packages.gz
-            bzip2 -9 -k -f Packages
-            gzip -9 -k -f Packages
-
-            echo "===== 生成的Packages头部 ====="
-            head -20 Packages
           else
             echo "没有合法deb包，跳过Packages生成"
             touch Packages
           fi
 
-          echo "===== 生成Release文件 ====="
-          cat > Release <<EOF
-Origin: 蛋蛋
-Label: 蛋蛋
-Suite: stable
-Codename: ios
-Architectures: iphoneos-arm64
-Components: main
-Description: 蛋蛋个人源
-EOF
-
-          if [ $DEB_EXIST -eq 1 ]; then
-            {
-              echo "MD5Sum:"
-              for f in Packages Packages.gz Packages.bz2; do
-                [ -f "$f" ] && printf ' %s %16s %s\n' "$(md5sum "$f" | cut -d' ' -f1)" "$(stat -c%s "$f")" "$f"
-              done
-              echo "SHA1:"
-              for f in Packages Packages.gz Packages.bz2; do
-                [ -f "$f" ] && printf ' %s %16s %s\n' "$(sha1sum "$f" | cut -d' ' -f1)" "$(stat -c%s "$f")" "$f"
-              done
-              echo "SHA256:"
-              for f in Packages Packages.gz Packages.bz2; do
-                [ -f "$f" ] && printf ' %s %16s %s\n' "$(sha256sum "$f" | cut -d' ' -f1)" "$(stat -c%s "$f")" "$f"
-              done
-            } >> Release
-          fi
+          echo "Origin: 蛋蛋" > Release
+          echo "Label: 蛋蛋" >> Release
+          echo "Suite: stable" >> Release
+          echo "Codename: ios" >> Release
+          echo "Architectures: iphoneos-arm64" >> Release
+          echo "Components: main" >> Release
+          echo "Description: 蛋蛋个人源" >> Release
+          
+          echo "===== public目录文件 ====="
+          ls -la
+          ls -la debs/ || true
 
           echo "===== Release内容 ====="
           cat Release
-          echo "===== public目录文件 ====="
-          ls -la
+
+          if [ $DEB_EXIST -eq 1 ]; then
+            echo "===== Packages头部 ====="
+            head -40 Packages
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
