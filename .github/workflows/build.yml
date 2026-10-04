@@ -57,8 +57,8 @@ jobs:
             echo "开始生成Packages索引"
             dpkg-scanpackages -m debs /dev/null > Packages
 
-            echo "===== 修正Packages内架构为iphoneos-arm64 ====="
-            sed -i 's/^Architecture: .*/Architecture: iphoneos-arm64/' Packages
+            echo "===== 修正Packages内架构为iphoneos-arm64e ====="
+            sed -i 's/^Architecture: .*/Architecture: iphoneos-arm64e/' Packages
 
             bzip2 -9 -k -f Packages
             gzip -9 -k -f Packages
@@ -71,7 +71,7 @@ jobs:
           echo "Label: 蛋蛋" >> Release
           echo "Suite: stable" >> Release
           echo "Codename: ios" >> Release
-          echo "Architectures: iphoneos-arm64" >> Release
+          echo "Architectures: iphoneos-arm64e" >> Release
           echo "Components: main" >> Release
           echo "Description: 蛋蛋个人源" >> Release
           
