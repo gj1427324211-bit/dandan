@@ -1,5 +1,4 @@
 name: Build Sileo Repo
-
 on:
   push:
     branches: [ main ]
@@ -21,100 +20,73 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt update && sudo apt install -y dpkg-dev bzip2 gzip
+        run: sudo apt update && sudo apt install -y dpkg-dev bzip2
 
       - name: Build repo
         run: |
-          set -e
-
           rm -rf public
           mkdir -p public/debs
 
           echo "===== 仓库根目录 ====="
           ls -la ./
 
-          ROOTLESS_COUNT=0
-          ROOTHIDE_COUNT=0
-
-          shopt -s nullglob
-
-          # 无根包：iphoneos-arm64，不要改 Architecture，让 Sileo/RootHide Patcher 判断转换
-          if [ -d "debs/rootless" ]; then
-            echo "===== 处理无根包 (iphoneos-arm64) ====="
-            for f in debs/rootless/*.deb; do
+          DEB_EXIST=0
+          if [ -d "debs" ]; then
+            echo "debs文件夹存在"
+            ls -la debs/
+            for f in debs/*.deb; do
               if [ -f "$f" ]; then
                 if dpkg-deb --info "$f" >/dev/null 2>&1; then
-                  ARCH=$(dpkg-deb -f "$f" Architecture 2>/dev/null || true)
-                  echo "  ✅ $(basename "$f") | Architecture: $ARCH"
+                  echo "✅ $f 合法deb，复制"
                   cp "$f" public/debs/
-                  ROOTLESS_COUNT=$((ROOTLESS_COUNT + 1))
+                  DEB_EXIST=1
                 else
-                  echo "  ❌ $(basename "$f") 损坏，跳过"
+                  echo "❌ $f 损坏，跳过"
                 fi
               fi
             done
           else
-            echo "⚠️ debs/rootless/ 不存在，跳过"
+            echo "⚠️ 仓库根目录没有debs文件夹"
           fi
-
-          # 隐根包：iphoneos-arm64e，直接装
-          if [ -d "debs/roothide" ]; then
-            echo "===== 处理隐根包 (iphoneos-arm64e) ====="
-            for f in debs/roothide/*.deb; do
-              if [ -f "$f" ]; then
-                if dpkg-deb --info "$f" >/dev/null 2>&1; then
-                  ARCH=$(dpkg-deb -f "$f" Architecture 2>/dev/null || true)
-                  echo "  ✅ $(basename "$f") | Architecture: $ARCH"
-                  cp "$f" public/debs/
-                  ROOTHIDE_COUNT=$((ROOTHIDE_COUNT + 1))
-                else
-                  echo "  ❌ $(basename "$f") 损坏，跳过"
-                fi
-              fi
-            done
-          else
-            echo "⚠️ debs/roothide/ 不存在，跳过"
-          fi
-
-          TOTAL=$((ROOTLESS_COUNT + ROOTHIDE_COUNT))
-          echo "===== 统计：无根=$ROOTLESS_COUNT 隐根=$ROOTHIDE_COUNT 总计=$TOTAL ====="
-
-          if [ "$TOTAL" -eq 0 ]; then
-            echo "⚠️ 没有任何合法 deb 包，仍生成空 Packages/Release，避免 Pages 部署异常"
-          fi
-
-          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/ || echo "CydiaIcon.png 不存在，跳过"
+          
+          [ -f CydiaIcon.png ] && cp CydiaIcon.png public/ || echo "CydiaIcon.png不存在，跳过"
 
           cd public
+          
+          if [ $DEB_EXIST -eq 1 ]; then
+            echo "开始生成Packages索引"
+            dpkg-scanpackages -m debs /dev/null > Packages
 
-          # 不篡改 Architecture！无根保持 iphoneos-arm64，隐根保持 iphoneos-arm64e
-          dpkg-scanpackages -m debs /dev/null > Packages
+            # ⬇️ 就这里：不篡改 Architecture，让 deb 原始架构原样保留
+            # 无根包 = iphoneos-arm64 → roothide Sileo 会调起 RootHide Patcher 转换
+            # 隐根包 = iphoneos-arm64e → 直接安装
 
-          bzip2 -9 -k -f Packages || true
-          gzip -9 -k -f Packages || true
+            bzip2 -9 -k -f Packages
+            gzip -9 -k -f Packages
+          else
+            echo "没有合法deb包，跳过Packages生成"
+            touch Packages
+          fi
 
-          cat > Release <<EOF
-Origin: 蛋蛋
-Label: 蛋蛋
-Suite: stable
-Codename: ios
-Architectures: iphoneos-arm64 iphoneos-arm64e
-Components: main
-Description: 蛋蛋个人源
-EOF
-
-          echo "===== public 目录 ====="
+          echo "Origin: 蛋蛋" > Release
+          echo "Label: 蛋蛋" >> Release
+          echo "Suite: stable" >> Release
+          echo "Codename: ios" >> Release
+          echo "Architectures: iphoneos-arm64 iphoneos-arm64e" >> Release
+          echo "Components: main" >> Release
+          echo "Description: 蛋蛋个人源" >> Release
+          
+          echo "===== public目录文件 ====="
           ls -la
           ls -la debs/ || true
 
-          echo "===== Release 内容 ====="
+          echo "===== Release内容 ====="
           cat Release
 
-          echo "===== Packages 前 60 行 ====="
-          head -60 Packages || true
-
-          echo "ℹ️ 架构检查（仅供日志，不影响退出码）"
-          awk '/^Package:/{p=$2} /^Architecture:/{print p": "$2}' Packages || true
+          if [ $DEB_EXIST -eq 1 ]; then
+            echo "===== Packages头部 ====="
+            head -40 Packages
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
