@@ -33,40 +33,43 @@ jobs:
           echo "===== 仓库根目录 ====="
           ls -la ./
 
-          # 分类统计
           ROOTLESS_COUNT=0
           ROOTHIDE_COUNT=0
 
-          # 处理无根包
+          shopt -s nullglob
+
+          # 无根包：iphoneos-arm64，不要改 Architecture，让 Sileo/RootHide Patcher 判断转换
           if [ -d "debs/rootless" ]; then
             echo "===== 处理无根包 (iphoneos-arm64) ====="
             for f in debs/rootless/*.deb; do
-              [ -f "$f" ] || continue
-              if dpkg-deb --info "$f" >/dev/null 2>&1; then
-                ARCH=$(dpkg-deb -f "$f" Architecture 2>/dev/null || echo "unknown")
-                echo "  ✅ $(basename "$f") | Architecture: $ARCH"
-                cp "$f" public/debs/
-                ROOTLESS_COUNT=$((ROOTLESS_COUNT + 1))
-              else
-                echo "  ❌ $(basename "$f") 损坏，跳过"
+              if [ -f "$f" ]; then
+                if dpkg-deb --info "$f" >/dev/null 2>&1; then
+                  ARCH=$(dpkg-deb -f "$f" Architecture 2>/dev/null || true)
+                  echo "  ✅ $(basename "$f") | Architecture: $ARCH"
+                  cp "$f" public/debs/
+                  ROOTLESS_COUNT=$((ROOTLESS_COUNT + 1))
+                else
+                  echo "  ❌ $(basename "$f") 损坏，跳过"
+                fi
               fi
             done
           else
             echo "⚠️ debs/rootless/ 不存在，跳过"
           fi
 
-          # 处理隐根包
+          # 隐根包：iphoneos-arm64e，直接装
           if [ -d "debs/roothide" ]; then
             echo "===== 处理隐根包 (iphoneos-arm64e) ====="
             for f in debs/roothide/*.deb; do
-              [ -f "$f" ] || continue
-              if dpkg-deb --info "$f" >/dev/null 2>&1; then
-                ARCH=$(dpkg-deb -f "$f" Architecture 2>/dev/null || echo "unknown")
-                echo "  ✅ $(basename "$f") | Architecture: $ARCH"
-                cp "$f" public/debs/
-                ROOTHIDE_COUNT=$((ROOTHIDE_COUNT + 1))
-              else
-                echo "  ❌ $(basename "$f") 损坏，跳过"
+              if [ -f "$f" ]; then
+                if dpkg-deb --info "$f" >/dev/null 2>&1; then
+                  ARCH=$(dpkg-deb -f "$f" Architecture 2>/dev/null || true)
+                  echo "  ✅ $(basename "$f") | Architecture: $ARCH"
+                  cp "$f" public/debs/
+                  ROOTHIDE_COUNT=$((ROOTHIDE_COUNT + 1))
+                else
+                  echo "  ❌ $(basename "$f") 损坏，跳过"
+                fi
               fi
             done
           else
@@ -76,26 +79,20 @@ jobs:
           TOTAL=$((ROOTLESS_COUNT + ROOTHIDE_COUNT))
           echo "===== 统计：无根=$ROOTLESS_COUNT 隐根=$ROOTHIDE_COUNT 总计=$TOTAL ====="
 
-          if [ $TOTAL -eq 0 ]; then
-            echo "❌ 没有任何合法 deb 包，终止构建"
-            exit 1
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "⚠️ 没有任何合法 deb 包，仍生成空 Packages/Release，避免 Pages 部署异常"
           fi
 
-          # 复制图标
           [ -f CydiaIcon.png ] && cp CydiaIcon.png public/ || echo "CydiaIcon.png 不存在，跳过"
 
           cd public
 
-          # 生成 Packages（不篡改 Architecture）
-          echo "===== 生成 Packages ====="
+          # 不篡改 Architecture！无根保持 iphoneos-arm64，隐根保持 iphoneos-arm64e
           dpkg-scanpackages -m debs /dev/null > Packages
 
-          # 压缩
-          bzip2 -9 -k -f Packages
-          gzip -9 -k -f Packages
+          bzip2 -9 -k -f Packages || true
+          gzip -9 -k -f Packages || true
 
-          # 生成 Release
-          # 同时声明 arm64 + arm64e，让 Sileo 按设备 bootstrap 自动过滤
           cat > Release <<EOF
 Origin: 蛋蛋
 Label: 蛋蛋
@@ -114,15 +111,10 @@ EOF
           cat Release
 
           echo "===== Packages 前 60 行 ====="
-          head -60 Packages
+          head -60 Packages || true
 
-          # 校验：检查是否有 Architecture 被篡改的痕迹
-          if grep -q "^Architecture: iphoneos-arm64e$" Packages; then
-            echo "ℹ️ 检测到 iphoneos-arm64e 包（隐根）"
-          fi
-          if grep -q "^Architecture: iphoneos-arm64$" Packages; then
-            echo "ℹ️ 检测到 iphoneos-arm64 包（无根）"
-          fi
+          echo "ℹ️ 架构检查（仅供日志，不影响退出码）"
+          awk '/^Package:/{p=$2} /^Architecture:/{print p": "$2}' Packages || true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
